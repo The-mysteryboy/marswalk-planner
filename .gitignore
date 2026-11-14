@@ -1,0 +1,4 @@
+node_modules/
+__pycache__/
+*.tif
+.DS_Store

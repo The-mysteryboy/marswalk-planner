@@ -1,0 +1,7 @@
+# Every text file stays LF on every machine, so release hashes mean the same everywhere.
+* text=auto eol=lf
+# Grids and images must stay byte-exact. Line-ending conversion would corrupt them.
+*.bin binary
+*.jpg binary
+*.png binary
+*.webp binary

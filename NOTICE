@@ -1,0 +1,10 @@
+Marswalk Planner
+Copyright 2026 the-mysteryboy
+
+Licensed under the Apache License, Version 2.0 (see LICENSE).
+
+This project includes Leaflet 1.9.4, which is under its own BSD 2-Clause licence
+(see vendor/leaflet/LICENSE).
+
+Map imagery, elevation, rover and other data come from NASA and partner sources,
+each with its own terms and credit line, listed in SOURCES.md.

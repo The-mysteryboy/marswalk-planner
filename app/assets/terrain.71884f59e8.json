@@ -1,0 +1,64 @@
+{
+  "full": {
+    "role": "report",
+    "bounds": {
+      "west": 77.01984795790202,
+      "east": 78.11976052613504,
+      "south": 17.960108519852344,
+      "north": 18.960197975841414
+    },
+    "width": 1546,
+    "height": 1482,
+    "cell_size_m": 40.0,
+    "cell_note": "Projected metres on the 3396.19 km sphere of the DEM CRS, averaged from the 20 m source",
+    "nodata": -32768,
+    "encoding": {
+      "file": "terrain_full.bin",
+      "type": "Int16LE",
+      "filter": "predict-2d",
+      "order": "row 0 is the north edge, west to east",
+      "formula": "elevation_m = stored * scale + offset, after undoing the filter",
+      "scale": 0.1,
+      "offset": -2000.0,
+      "sha256": "0391d9c111d53b4f971c379fff1b4e0e0f9fa54463297a4d4d3de9ad7191cec4"
+    },
+    "source": {
+      "name": "Mars 2020 Science Investigation CTX DEM Mosaic (USGS Astrogeology)",
+      "url": "https://astrogeology.usgs.gov/search/map/mars_2020_science_investigation_ctx_dem_mosaic",
+      "file": "https://planetarymaps.usgs.gov/mosaic/mars2020_trn/CTX/ScienceInvestigationMaps_JPL/M20_JezeroCrater_CTXDEM_20m.tif"
+    },
+    "crs": "Jezero_Crater_Projection",
+    "vertical_note": "Metres relative to the Mars areoid (MOLA-tied), the reference used by the source DEM"
+  },
+  "coarse": {
+    "role": "preview",
+    "bounds": {
+      "west": 77.01984795790202,
+      "east": 78.11976052613504,
+      "south": 17.960108519852344,
+      "north": 18.960197975841414
+    },
+    "width": 773,
+    "height": 741,
+    "cell_size_m": 80.0,
+    "cell_note": "Projected metres on the 3396.19 km sphere of the DEM CRS, averaged from the 20 m source",
+    "nodata": -32768,
+    "encoding": {
+      "file": "terrain_coarse.bin",
+      "type": "Int16LE",
+      "filter": "predict-2d",
+      "order": "row 0 is the north edge, west to east",
+      "formula": "elevation_m = stored * scale + offset, after undoing the filter",
+      "scale": 1.0,
+      "offset": -2000.0,
+      "sha256": "8cac86c268a5598184bd110e75d034d1ac89bd6ee6ad77968eca74e7243e99f7"
+    },
+    "source": {
+      "name": "Mars 2020 Science Investigation CTX DEM Mosaic (USGS Astrogeology)",
+      "url": "https://astrogeology.usgs.gov/search/map/mars_2020_science_investigation_ctx_dem_mosaic",
+      "file": "https://planetarymaps.usgs.gov/mosaic/mars2020_trn/CTX/ScienceInvestigationMaps_JPL/M20_JezeroCrater_CTXDEM_20m.tif"
+    },
+    "crs": "Jezero_Crater_Projection",
+    "vertical_note": "Metres relative to the Mars areoid (MOLA-tied), the reference used by the source DEM"
+  }
+}

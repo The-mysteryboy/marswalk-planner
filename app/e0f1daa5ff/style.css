@@ -1,0 +1,1036 @@
+:root {
+  color-scheme: dark;
+  --bg: #12100e;
+  --surface: #1b1815;
+  --surface-2: #26211d;
+  --line: #3b342e;
+  --text: #f4eee7;
+  --muted: #bbb0a4;
+  --faint: #9a8f83;
+  --accent: #ff8a3d;
+  --accent-ink: #1f0f05;
+  --go: #46d39a;
+  --caution: #ffec80;
+  --nogo: #f0386b;
+  --nogo-text: #f44876; /* Small text only, for 4.5:1. Marks keep the validated --nogo. */
+  --radius: 10px;
+  --sans: system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; margin: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.45 var(--sans);
+}
+
+a { color: var(--accent); }
+
+h1, h2, h3, p { margin: 0; }
+
+button, input, select { font: inherit; color: inherit; }
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Layout ---------------------------------------------------------------- */
+.app {
+  display: grid;
+  height: 100vh;
+  height: 100dvh;
+  grid-template-columns: minmax(340px, 410px) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+.side {
+  grid-row: 1 / 3;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  overflow-y: auto;
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+}
+
+.mapwrap { position: relative; min-height: 0; }
+#map { position: absolute; inset: 0; background: #0c0a09; }
+
+.brand { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 0 12px; }
+.brand h1 { font-size: 20px; line-height: 1.2; letter-spacing: -0.01em; }
+.brand p { grid-column: 1 / -1; color: var(--muted); font-size: 13px; line-height: 18px; }
+.brand .purpose { margin-top: 4px; color: var(--text); font-size: 14px; line-height: 20px; text-wrap: balance; }
+
+/* Buttons --------------------------------------------------------------- */
+.btn {
+  min-height: 38px;
+  padding: 6px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.btn:hover:not(:disabled) { border-color: var(--faint); }
+.btn:disabled { color: var(--faint); cursor: not-allowed; opacity: 0.7; }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.btn-primary:hover:not(:disabled) { border-color: var(--text); }
+.btn-quiet { background: transparent; }
+
+.btn-wide { width: 100%; }
+.start-actions { display: flex; gap: 8px; }
+.start-actions .btn-primary { flex: 3 1 0; min-height: 48px; font-size: 17px; }
+.start-actions .btn-quiet { flex: 2 1 0; padding: 4px 8px; font-size: 13.5px; line-height: 18px; }
+
+.tools { display: flex; gap: 8px; flex-wrap: wrap; }
+.tools .btn { flex: 1 1 auto; }
+
+/* Nothing here means anything until a route exists. */
+.summary:not([data-route]) .tools, .summary:not([data-route]) .stats { display: none; }
+
+/* Start here ------------------------------------------------------------ */
+.start {
+  position: relative;
+  padding: 10px 14px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  font-size: 14px;
+}
+.start h2 { font-size: 15px; }
+.start ol { margin: 4px 0 0; padding-left: 20px; }
+.start li + li { margin-top: 2px; }
+.start strong { font-weight: 600; }
+[data-start-hidden] .start { display: none; }
+
+/* Verdict --------------------------------------------------------------- */
+.summary { display: flex; flex-direction: column; gap: 12px; }
+
+.verdict {
+  --state: var(--faint);
+  padding: 12px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-left: 5px solid var(--state);
+  border-radius: var(--radius);
+}
+.verdict[data-state="go"] { --state: var(--go); }
+.verdict[data-state="caution"] { --state: var(--caution); }
+.verdict[data-state="nogo"] { --state: var(--nogo); }
+
+/* A preview is deliberately colourless, so it can never read as a Go. */
+.verdict[data-state="refining"] .verdict-head h2,
+.verdict[data-state="unavailable"] .verdict-head h2 { font-size: 19px; }
+
+.verdict-head { display: flex; align-items: center; gap: 10px; }
+.verdict-head h2 { font-size: 34px; line-height: 1.1; letter-spacing: 0.01em; }
+.verdict[data-state="empty"] .verdict-head h2 { font-size: 20px; }
+
+.verdict-icon { flex: none; width: 32px; height: 32px; }
+.verdict-icon:empty { display: none; }
+.verdict-icon svg { display: block; width: 100%; height: 100%; color: var(--state); }
+
+.verdict-reasons { margin: 6px 0 0; padding: 0; list-style: none; color: var(--muted); font-size: 14px; }
+.verdict-reasons li + li { margin-top: 4px; }
+.verdict-reasons .sev-nogo { color: var(--text); }
+.verdict-reasons .sev-nogo::before { content: "No-Go: "; color: var(--nogo-text); font-weight: 600; }
+.verdict-reasons .sev-caution { color: var(--text); }
+.verdict-reasons .sev-caution::before { content: "Caution: "; color: var(--caution); font-weight: 600; }
+.verdict-reasons li:nth-child(n + 2) { display: none; } /* One line here. Why? has them all. */
+.verdict-more { margin-top: 4px; color: var(--muted); font-size: 13px; }
+.verdict-more[hidden] { display: none; }
+
+.btn-why {
+  flex: none;
+  margin-left: auto;
+  min-height: 34px;
+  padding: 2px 14px;
+  background: transparent;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-why:hover { border-color: var(--text); }
+.btn-why[aria-expanded="true"], .explain-btn[aria-expanded="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+
+.preset-note { margin-top: 6px; color: var(--muted); font-size: 12.5px; }
+.preset-note[hidden] { display: none; }
+
+.route-sentence { font-size: 14px; }
+
+/* Stats ----------------------------------------------------------------- */
+.stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  margin: 0;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.stats > div { padding: 8px 12px; background: var(--surface); }
+.stats dt { display: flex; align-items: center; justify-content: space-between; gap: 6px; color: var(--muted); font-size: 12px; }
+
+/* Nothing to explain until a route exists. */
+.summary:not([data-route]) .explain-btn, .summary:not([data-route]) .btn-why { display: none; }
+.explain-btn {
+  position: relative;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid var(--faint);
+  border-radius: 50%;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+}
+.explain-btn::after { content: ""; position: absolute; inset: -8px; } /* A larger target than it looks. */
+.explain-btn:hover { border-color: var(--text); color: var(--text); }
+
+.explain {
+  position: relative;
+  padding: 12px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  font-size: 13.5px;
+}
+.explain:focus { outline: none; }
+.explain-title { padding-right: 60px; font-size: 15px; }
+.explain-title span { font-variant-numeric: tabular-nums; }
+.explain-rule { margin-top: 6px; }
+.explain-note { margin-top: 6px; color: var(--muted); font-size: 12.5px; }
+.explain-inputs { margin: 8px 0 0; }
+.explain-inputs > div { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; border-top: 1px solid var(--line); }
+.explain-inputs dt { color: var(--muted); }
+.explain-inputs dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.btn-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  min-height: 28px;
+  padding: 2px 10px;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.btn-close:hover { border-color: var(--faint); color: var(--text); }
+.why-list { margin: 8px 0 0; padding: 0; list-style: none; }
+.why-list li + li { margin-top: 4px; }
+.why-list strong { font-weight: 600; }
+.why-nogo strong { color: var(--nogo-text); }
+.why-caution strong { color: var(--caution); }
+.why-ok { color: var(--muted); }
+.why-ok strong { color: var(--go); }
+.stats dd { margin: 0; font-size: 19px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.stats dd small { display: block; color: var(--muted); font-size: 12px; font-weight: 400; line-height: 1.3; }
+.stats.is-preview dd { color: var(--muted); font-weight: 400; }
+
+/* The report is out of date during a drag, so it should not look current. */
+.is-dragging .verdict, .is-dragging .route-sentence, .is-dragging .turnback, .is-dragging .stats, .is-dragging .explain, .is-dragging .profile { opacity: 0.55; }
+
+.assumption-note { color: var(--muted); font-size: 12px; }
+.tag-assumption {
+  display: inline-block;
+  padding: 0 5px;
+  border: 1px solid var(--faint);
+  border-radius: 4px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+/* Sections -------------------------------------------------------------- */
+.panel { display: flex; flex-direction: column; gap: 6px; }
+
+details { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius); }
+summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 8px 14px;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+summary::-webkit-details-marker { display: none; }
+summary::after {
+  content: "";
+  margin-left: auto;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: rotate(45deg) translate(-2px, -2px);
+}
+details[open] > summary::after { transform: rotate(225deg) translate(-2px, -2px); }
+
+.count {
+  min-width: 20px;
+  padding: 0 6px;
+  background: var(--accent);
+  border-radius: 10px;
+  color: var(--accent-ink);
+  font-size: 12px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.count:empty { display: none; }
+
+.section-body { padding: 2px 14px 14px; }
+summary small { display: block; color: var(--muted); font-size: 12px; font-weight: 400; }
+/* More tools opens a lot, so it looks like the button it is. */
+#more-tools > summary { border: 1px solid var(--faint); border-radius: var(--radius); background: var(--surface); }
+#more-tools > summary::after { width: 10px; height: 10px; border-color: var(--accent); }
+#more-tools[open] > summary { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+.tools-hint { padding: 6px 10px; border: 1px dashed var(--accent); border-radius: 8px; font-size: 13.5px; }
+.tools-hint[hidden] { display: none; }
+
+/* Layers, on the map */
+.map-layers { position: relative; }
+.map-layers-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 4px 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+  font: 600 13px var(--sans);
+  cursor: pointer;
+}
+.map-layers-btn[aria-expanded="true"] { border-color: var(--accent); }
+.map-layers-btn svg { width: 16px; height: 16px; flex: none; }
+.map-layers-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: min(250px, calc(100vw - 40px));
+  overflow-y: auto;
+  padding: 8px 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.5);
+  font: 13px/1.35 var(--sans);
+  color: var(--text);
+}
+.map-layers-panel[hidden] { display: none; }
+.map-layers-panel h3 { margin: 6px 0 2px; color: var(--muted); font-size: 12px; }
+.map-layers-panel h3:first-child { margin-top: 0; }
+.map-layers-panel label { display: flex; align-items: flex-start; gap: 8px; padding: 4px 0; cursor: pointer; }
+.map-layers-panel input { margin-top: 2px; accent-color: var(--accent); }
+.map-layers-panel p { margin-top: 6px; color: var(--muted); font-size: 12px; }
+.touch-hint {
+  position: absolute;
+  top: 60px;
+  left: 54px;
+  z-index: 560;
+  max-width: calc(100% - 64px);
+  padding: 6px 12px;
+  background: rgb(18 16 14 / 0.92);
+  border-radius: 8px;
+  font-size: 14px;
+  pointer-events: none;
+}
+/* One message at a time: a passing hint outranks a caption, which outranks the mode note. */
+/* Waiting for a base map someone just chose outranks the mode note too. */
+.mapwrap:has(.map-busy[data-base-loading="true"]) .mode-note { display: none; }
+.map-busy[data-base-loading="true"] { max-width: calc(100% - 64px); opacity: 1; }
+.mapwrap:has(#touch-hint:not([hidden])) :is(#walk-caption, .mode-note, .map-busy),
+.mapwrap:has(#walk-caption:not([hidden])) :is(.mode-note, .map-busy) { display: none; }
+/* Nothing else shows over an open popup or Layers panel, and it comes back when they close. */
+.mapwrap.map-covered :is(.mode-note, .map-busy, .touch-hint, .walk-caption, .keyboard-hint, .map-bottom),
+.tour-open .mapwrap :is(.mode-note, .map-busy, .touch-hint, .walk-caption, .keyboard-hint, .map-bottom) { display: none; }
+/* Narrow or touch screens: a compact popup, at most about 45% of the map, that scrolls inside. */
+@media (max-width: 860px), (pointer: coarse) {
+  .leaflet-popup-content {
+    max-width: calc(var(--map-width, 300px) - 90px);
+    max-height: var(--popup-text-height, 110px);
+    margin: 10px 12px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+  }
+  .leaflet-popup-content > :first-child { padding-right: 34px; }
+  .leaflet-container a.leaflet-popup-close-button { width: 44px; height: 44px; font-size: 24px; line-height: 44px; }
+}
+.touch-hint[hidden] { display: none; }
+/* A dragged marker must keep the touch, even where one finger scrolls the page. */
+.leaflet-marker-draggable { touch-action: none; }
+.more-body { display: flex; flex-direction: column; gap: 6px; }
+.more-body details { background: var(--surface); }
+.more-body .eyebrow { margin-top: 8px; }
+.fine-first { margin-top: 0; margin-bottom: 8px; }
+.eyebrow { margin: 10px 0 4px; color: var(--muted); font-size: 12px; font-weight: 600; }
+.eyebrow:first-child { margin-top: 0; }
+.fine { margin-top: 10px; color: var(--muted); font-size: 12.5px; }
+
+/* Map key --------------------------------------------------------------- */
+.legend { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 10px; margin: 0; padding: 0; list-style: none; font-size: 12.5px; color: var(--muted); }
+.legend li { display: flex; align-items: center; gap: 6px; }
+.legend .swatch { width: 20px; height: 14px; margin: 0; }
+
+/* Leg table ------------------------------------------------------------- */
+.legs { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.legs th, .legs td { padding: 4px 6px; border-bottom: 1px solid var(--line); text-align: right; }
+.legs th { color: var(--muted); font-weight: 600; font-size: 12px; }
+.legs th:first-child, .legs td:first-child { text-align: left; padding-left: 0; }
+.legs td:last-child, .legs th:last-child { padding-right: 0; }
+
+/* Layer rows ------------------------------------------------------------ */
+.layer { padding: 7px 0; border-top: 1px solid var(--line); }
+.layer:first-child { border-top: 0; }
+.layer-main { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; }
+.layer-main input { flex: none; width: 17px; height: 17px; margin: 2px 0 0; accent-color: var(--accent); }
+.layer-label { font-size: 14px; line-height: 1.3; }
+.layer-note { display: block; color: var(--muted); font-size: 12.5px; }
+.layer-status { display: block; color: var(--caution); font-size: 12.5px; }
+.layer-status:empty { display: none; }
+
+.swatch { flex: none; width: 18px; height: 18px; margin-top: 1px; }
+
+.layer-more { margin: 2px 0 0 25px; font-size: 12.5px; }
+.layer-card { margin: 6px 0 2px; padding: 8px 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.layer-card > div + div { margin-top: 5px; }
+.layer-card dt { color: var(--muted); font-size: 11.5px; font-weight: 600; }
+.layer-card dd { margin: 0; }
+.layer-key { display: flex; align-items: flex-start; gap: 6px; }
+
+.opacity { display: flex; align-items: center; gap: 8px; margin: 4px 0 0 25px; color: var(--muted); font-size: 12px; }
+.opacity input { flex: 1; min-width: 0; accent-color: var(--accent); }
+.opacity output { width: 3.2em; text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Stop list ------------------------------------------------------------- */
+.stop { padding: 8px 0; border-top: 1px solid var(--line); }
+.stop:first-child { border-top: 0; }
+.stop-head { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+.stop-name { font-weight: 600; font-size: 14px; }
+.stop-dist { flex: none; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.stop p { color: var(--muted); font-size: 13px; }
+.stop-meta { margin-top: 2px; font-size: 12px; }
+.stop-actions { display: flex; gap: 10px; align-items: center; margin-top: 4px; font-size: 12.5px; }
+.linklike {
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--accent);
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: inherit;
+}
+
+.safest-note { padding: 8px 12px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; font-size: 13px; }
+.safest-note[hidden] { display: none; }
+.safest-note .linklike { margin-top: 4px; }
+
+/* Scenarios ------------------------------------------------------------- */
+.scenario-list { display: flex; flex-direction: column; gap: 6px; }
+.scenario-list .btn { text-align: left; padding: 8px 12px; }
+.scenario-name { display: block; font-size: 14px; }
+.scenario-blurb { display: block; color: var(--muted); font-size: 12.5px; }
+.scenario-list .btn[aria-pressed="true"] { border-color: var(--accent); }
+.scenario { margin-top: 10px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.scenario[hidden] { display: none; }
+.scenario-title { font-size: 15px; }
+.scenario-caption { margin-top: 6px; font-size: 14px; }
+.scenario-source { margin-top: 4px; color: var(--muted); font-size: 12px; }
+.scenario-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; }
+.scenario-count { color: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.scenario-goal { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); font-size: 13.5px; }
+.goal-result { margin-top: 4px; font-size: 13.5px; }
+.goal-result[data-pass="true"] strong { color: var(--go); }
+.goal-result[data-pass="false"] strong { color: var(--caution); }
+
+/* Conditions ------------------------------------------------------------ */
+.condition { padding: 8px 0; border-top: 1px solid var(--line); }
+.condition:first-child { border-top: 0; }
+.condition-row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.condition-name { font-size: 14px; }
+.condition-value { font-weight: 600; font-size: 16px; font-variant-numeric: tabular-nums; }
+.condition p { color: var(--muted); font-size: 12.5px; }
+.banner {
+  margin-bottom: 8px;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 12.5px;
+}
+.banner strong { color: var(--text); }
+
+/* Settings -------------------------------------------------------------- */
+.setting { display: grid; grid-template-columns: 1fr 86px; gap: 8px; align-items: center; padding: 5px 0; font-size: 14px; }
+.setting small { display: block; color: var(--muted); font-size: 12px; }
+.setting input {
+  width: 100%;
+  min-height: 34px;
+  padding: 4px 8px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.presets { display: flex; gap: 6px; }
+.presets .btn { flex: 1 1 0; padding: 6px 4px; }
+.presets .btn[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.preset-compare { margin: 8px 0; }
+.preset-compare[hidden] { display: none; }
+.compare-sides { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.compare-side { padding: 7px 9px; background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--faint); border-radius: 8px; font-size: 12.5px; }
+.compare-side[data-level="go"] { border-top-color: var(--go); }
+.compare-side[data-level="caution"] { border-top-color: var(--caution); }
+.compare-side[data-level="nogo"] { border-top-color: var(--nogo); }
+.compare-title { color: var(--muted); }
+.compare-word { font-size: 17px; font-weight: 600; }
+.compare-side dl { margin: 4px 0 0; }
+.compare-side dt { color: var(--muted); font-size: 11.5px; }
+.compare-side dd { margin: 0 0 2px; font-variant-numeric: tabular-nums; }
+
+.credits { margin-top: auto; color: var(--faint); font-size: 12px; }
+
+/* Map chrome ------------------------------------------------------------ */
+.readout {
+  padding: 3px 8px;
+  background: rgb(18 16 14 / 0.82);
+  border-radius: 6px;
+  font: 12px/1.5 var(--mono);
+  pointer-events: none;
+}
+
+/* What a map click does. Always visible, so Inspect can't be mistaken for drawing. */
+.map-top {
+  position: absolute;
+  top: 10px;
+  left: 54px;
+  right: 96px; /* Clear of Layers. */
+  z-index: 500;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  pointer-events: none;
+}
+.mode-note:empty { display: none; }
+.mode-note {
+  padding: 3px 8px;
+  background: rgb(18 16 14 / 0.86);
+  border-radius: 6px;
+  font-size: 12.5px;
+}
+.map-mode {
+  display: flex;
+  pointer-events: auto;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.mode-btn {
+  min-height: 34px;
+  padding: 4px 12px;
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+}
+.mode-btn[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.mode-btn:hover:not([aria-pressed="true"]) { color: var(--text); }
+/* Bottom left: one stack, so the key, the readout and a notice can never overlap. */
+.map-bottom {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  z-index: 500;
+  display: flex;
+  flex-direction: column-reverse; /* The key stays at the bottom, with anything else above it. */
+  align-items: flex-start;
+  gap: 4px;
+  max-width: calc(100% - 96px); /* Clear of the scale bar and credits. */
+  pointer-events: none;
+}
+.map-symbols {
+  display: flex;
+  gap: 12px;
+  padding: 3px 8px;
+  background: rgb(18 16 14 / 0.86);
+  border-radius: 6px;
+  font-size: 12.5px;
+  pointer-events: none;
+}
+.map-symbols span { display: flex; align-items: center; gap: 5px; }
+.map-symbols svg { width: 15px; height: 15px; }
+
+.is-inspecting .leaflet-grab, .is-inspecting #map { cursor: help; }
+
+/* The delay stops it flickering when tiles come straight from the cache. */
+.map-busy {
+  position: absolute;
+  top: 54px; /* Below the Layers button. */
+  right: 10px;
+  z-index: 550;
+  margin: 0;
+  padding: 3px 10px;
+  background: rgb(18 16 14 / 0.86);
+  border-radius: 6px;
+  font-size: 12.5px;
+  opacity: 0;
+  pointer-events: none;
+}
+.map-busy[data-layer-busy="true"] {
+  opacity: 1;
+  transition: opacity 0.1s linear 0.08s;
+}
+
+.map-notice {
+  max-width: 440px;
+  padding: 8px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--caution);
+  border-radius: 8px;
+  font-size: 13px;
+}
+.map-notice[hidden] { display: none; }
+
+/* Keyboard route building: only shown while the map itself has keyboard focus. */
+.crosshair, .keyboard-hint { display: none; }
+.mapwrap:has(#map:focus-visible) .crosshair {
+  display: block;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 500;
+  width: 26px;
+  height: 26px;
+  margin: -13px 0 0 -13px;
+  background:
+    linear-gradient(var(--accent), var(--accent)) center / 2px 100% no-repeat,
+    linear-gradient(var(--accent), var(--accent)) center / 100% 2px no-repeat;
+  pointer-events: none;
+}
+.mapwrap:has(#map:focus-visible) .keyboard-hint {
+  display: block;
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  z-index: 500;
+  padding: 4px 10px;
+  background: rgb(18 16 14 / 0.86);
+  border-radius: 6px;
+  font-size: 13px;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+#map:focus-visible { outline-offset: -3px; }
+
+.load-error {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  z-index: 600;
+  width: min(90%, 460px);
+  padding: 10px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--nogo);
+  border-radius: 8px;
+  transform: translateX(-50%);
+}
+
+.leaflet-container { font: inherit; background: #0c0a09; }
+.leaflet-control-attribution {
+  background: rgb(18 16 14 / 0.78) !important;
+  color: var(--muted);
+  font-size: 11px;
+}
+.leaflet-control-attribution a { color: var(--muted); }
+.leaflet-bar a {
+  background: var(--surface-2);
+  border-bottom-color: var(--line);
+  color: var(--text);
+}
+.leaflet-bar a:hover, .leaflet-bar a:focus { background: var(--line); color: var(--text); }
+.leaflet-bar a.leaflet-disabled { background: var(--surface); color: var(--faint); }
+.leaflet-control-scale-line {
+  background: rgb(18 16 14 / 0.72);
+  border-color: var(--text);
+  color: var(--text);
+  text-shadow: none;
+}
+.leaflet-popup-content-wrapper, .leaflet-popup-tip { background: var(--surface-2); color: var(--text); }
+.leaflet-popup-content { margin: 10px 14px; font-size: 13.5px; line-height: 1.4; }
+.leaflet-popup-content p { margin: 4px 0; color: var(--muted); }
+.leaflet-popup-content a { color: var(--accent); }
+.leaflet-container a.leaflet-popup-close-button { color: var(--muted); }
+.popup-title { font-weight: 600; font-size: 14.5px; }
+.inspect-values { margin: 6px 0 0; }
+.inspect-values > div { display: flex; justify-content: space-between; gap: 12px; padding: 2px 0; }
+.inspect-values dt { color: var(--muted); }
+.inspect-values dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.leaflet-popup-content p.inspect-sentence { margin-top: 8px; color: var(--text); }
+.leaflet-popup-content p.inspect-note { font-size: 12.5px; }
+.inspect-heading { margin: 8px 0 2px; color: var(--muted); font-size: 12px; font-weight: 600; }
+.inspect-layers { margin: 0; padding: 0; list-style: none; font-size: 12.5px; color: var(--muted); }
+.inspect-layers li + li { margin-top: 3px; }
+.inspect-layers strong { color: var(--text); font-weight: 600; }
+
+.slope-image { image-rendering: pixelated; }
+
+.pin { display: flex; align-items: center; justify-content: center; }
+
+.pin-waypoint {
+  width: 24px;
+  height: 24px;
+  background: var(--accent);
+  border: 2px solid #fff;
+  border-radius: 50%;
+  color: var(--accent-ink);
+  box-shadow: 0 0 0 2px rgb(0 0 0 / 0.55);
+  font: 700 12px/1 var(--sans);
+}
+
+.pin-habitat {
+  width: 34px;
+  height: 34px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 0 0 2px rgb(0 0 0 / 0.6);
+  color: #17120e;
+}
+.pin-habitat svg { width: 22px; height: 22px; }
+
+.pin-stop {
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border: 2px solid #17120e;
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.7);
+  transform: rotate(45deg);
+}
+.pin-stop.is-near { background: var(--accent); }
+
+.pin-sample { /* the moving marker that follows the profile cursor */
+  width: 14px;
+  height: 14px;
+  background: var(--text);
+  border: 3px solid #17120e;
+  border-radius: 50%;
+}
+
+/* Elevation profile ----------------------------------------------------- */
+.profile {
+  position: relative;
+  padding: 10px 14px 8px;
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+}
+.profile-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; font-size: 13px; }
+.profile-head h2 { font-size: 14px; }
+.profile-key { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); font-size: 12px; }
+.profile-key i { display: inline-block; width: 16px; height: 8px; border-radius: 2px; }
+.profile-source { margin-left: auto; color: var(--faint); font-size: 12px; }
+.profile-source a { color: var(--muted); }
+.profile-chart { position: relative; height: 150px; margin-top: 4px; }
+.profile-chart svg { display: block; width: 100%; height: 100%; touch-action: none; }
+.profile-chart text { fill: var(--muted); font: 11px var(--sans); font-variant-numeric: tabular-nums; }
+.profile-tip {
+  position: absolute;
+  top: 0;
+  z-index: 2;
+  padding: 3px 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.profile-table { margin-top: 6px; font-size: 13px; color: var(--muted); }
+.steep-list { margin: 4px 0 0; padding-left: 18px; color: var(--muted); font-size: 13px; }
+
+/* Science along this walk ------------------------------------------------ */
+.science-line { margin-top: 6px; font-size: 13.5px; }
+.science-line[hidden] { display: none; }
+.science-card { padding: 10px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+.science-card[hidden] { display: none; }
+.science-card h3 { font-size: 14px; }
+.science-list { margin: 6px 0 0; padding-left: 20px; font-size: 13px; line-height: 1.4; }
+.science-list li + li { margin-top: 6px; }
+.science-list .science-name { font-weight: 600; }
+.science-list .science-off { color: var(--muted); }
+.science-list p { margin: 1px 0 0; color: var(--muted); }
+.science-card .fine:first-of-type { margin-top: 6px; }
+.stop-label {
+  position: absolute;
+  left: 0;
+  display: none;
+  padding: 1px 5px;
+  background: rgb(18 16 14 / 0.86);
+  border-radius: 4px;
+  color: #fff;
+  font: 600 11.5px/1.3 var(--sans);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.stop-labels-on .stop-label { display: block; }
+.stop-label-top { bottom: 20px; transform: translateX(-50%); } /* Clear of the base icon, when it sits on a stop. */
+.stop-label-bottom { top: 20px; transform: translateX(-50%); }
+.stop-label-left { top: -9px; right: 20px; left: auto; }
+.stop-label-right { top: -9px; left: 20px; }
+.walk-caption {
+  position: absolute;
+  top: 60px;
+  left: 54px; /* Clear of the zoom buttons. */
+  z-index: 560;
+  max-width: min(calc(100% - 64px), 420px);
+  padding: 6px 10px;
+  background: rgb(18 16 14 / 0.92);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  font-size: 13px;
+  pointer-events: none;
+}
+.walk-caption[hidden] { display: none; }
+.walk-passes { margin: 0; padding-left: 20px; font-size: 13px; }
+.walk-passes[hidden] { display: none; }
+.where { display: inline-block; margin-right: 4px; padding: 0 6px; border: 1px solid var(--faint); border-radius: 10px; font-size: 11.5px; font-weight: 600; }
+.feed-note { margin-top: 8px; padding: 8px 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; font-size: 13px; }
+.feed-note[hidden] { display: none; }
+
+/* Reachable science and the rover path ----------------------------------- */
+.undo-note { margin-top: 8px; padding: 6px 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; font-size: 13px; }
+.undo-note[hidden] { display: none; }
+#btn-reach-clear, #btn-rover-clear { margin-top: 10px; }
+#btn-reach-clear[hidden] { display: none; }
+.science { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--line); }
+.science h3 { margin-bottom: 6px; font-size: 14.5px; }
+.science .fine:first-of-type { margin-top: 0; margin-bottom: 8px; }
+.science .fine:empty { display: none; }
+.reach-summary { margin-top: 10px; font-size: 14px; }
+.reach-table { width: 100%; margin-top: 8px; border-collapse: collapse; font-size: 12.5px; line-height: 1.35; }
+.reach-table thead th { color: var(--muted); font-weight: 600; text-align: left; vertical-align: bottom; }
+.reach-table th, .reach-table td { padding: 3px 6px 3px 0; vertical-align: top; }
+.reach-table tbody { border-top: 1px solid var(--line); }
+.reach-table td:first-child { width: 42%; padding-left: 6px; border-left: 3px solid var(--go); }
+.reach-table tr[data-level="caution"] td:first-child { border-left-color: var(--caution); }
+.reach-table tr[data-level="nogo"] td:first-child { border-left-color: var(--nogo); }
+.reach-name th { padding-top: 6px; text-align: left; font-size: 13.5px; font-weight: 600; }
+.leaflet-tooltip.stop-tag {
+  padding: 1px 5px;
+  background: #1f1a16;
+  border: 1px solid var(--go);
+  color: #fff;
+  font-size: 11.5px;
+  box-shadow: none;
+}
+.leaflet-tooltip.stop-tag::before { display: none; }
+.leaflet-tooltip.stop-tag-caution { border-color: var(--caution); }
+.leaflet-tooltip.stop-tag-nogo { border-color: var(--nogo); }
+.rover-classes { margin: 8px 0 0; padding: 0; list-style: none; font-size: 13.5px; }
+.rover-classes li { padding-left: 8px; border-left: 3px solid var(--go); }
+.rover-classes li + li { margin-top: 3px; }
+.rover-classes li[data-level="caution"] { border-left-color: var(--caution); border-left-width: 5px; }
+.rover-classes li[data-level="nogo"] { border-left-color: var(--nogo); border-left-width: 7px; }
+.map-symbols span[hidden] { display: none; }
+
+/* Turn-back point ------------------------------------------------------- */
+.turnback { padding-left: 10px; border-left: 3px solid var(--accent); font-size: 14px; }
+.profile-chart text.turn-label { fill: var(--text); font-weight: 600; }
+.pin-turn {
+  position: absolute;
+  bottom: 9px;
+  left: 0;
+  padding: 2px 8px;
+  background: var(--text);
+  color: #12100e;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+.pin-turn::after {
+  position: absolute;
+  bottom: -5px;
+  left: calc(50% - 6px);
+  border: solid transparent;
+  border-width: 6px 6px 0;
+  border-top-color: var(--text);
+  content: "";
+}
+
+/* Play the walk --------------------------------------------------------- */
+.walk { display: grid; gap: 8px; }
+.walk[hidden] { display: none; }
+.walk-controls { display: flex; gap: 8px; }
+.walk-controls .btn { flex: 1 1 auto; }
+.walk-speeds { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.walk-speeds[hidden] { display: none; }
+.walk-speeds .mode-btn { min-width: 44px; padding: 4px 8px; font-variant-numeric: tabular-nums; }
+.walk-step { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+.walk-step[hidden] { display: none; }
+.walk-step input { width: 100%; min-height: 32px; accent-color: var(--accent); }
+.walk-live { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 12px; margin: 0; }
+.walk-live[hidden] { display: none; }
+.walk-live > div { display: flex; flex-direction: column; }
+.walk-live dt { color: var(--muted); font-size: 12px; }
+.walk-live dd { margin: 0; font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.walk-status { font-size: 13.5px; line-height: 18px; }
+.walk-status:empty { display: none; }
+.pin-walker {
+  width: 20px;
+  height: 20px;
+  background: var(--accent);
+  border: 3px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px #000;
+}
+
+/* Tour ------------------------------------------------------------------ */
+/* Room for the ring when a target scrolls to the top of a short screen. */
+#btn-demo, #verdict, #mode-inspect, #scenarios-section > summary, #more-tools > summary { scroll-margin-top: 8px; }
+/* Clicks pass through the ring, because the tour never blocks the page. */
+.tour-ring {
+  position: fixed;
+  z-index: 1100;
+  border: 2px solid var(--accent);
+  border-radius: 10px;
+  box-shadow: 0 0 0 100vmax rgb(0 0 0 / 0.5);
+  pointer-events: none;
+}
+.tour {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1200;
+  width: min(320px, calc(100vw - 24px));
+  padding: 12px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  box-shadow: 0 6px 24px rgb(0 0 0 / 0.5);
+}
+.tour-count { color: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.tour h2 { font-size: 16px; }
+.tour-nav { display: flex; gap: 8px; margin-top: 10px; }
+.tour-nav .btn[hidden] { display: none; }
+#tour-skip { margin-right: auto; }
+
+/* About ----------------------------------------------------------------- */
+.about {
+  width: min(680px, calc(100vw - 32px));
+  max-height: calc(100dvh - 48px);
+  padding: 22px 24px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  color: var(--text);
+}
+.about::backdrop { background: rgb(0 0 0 / 0.65); }
+.about h2 { font-size: 21px; }
+.about h3 { margin: 18px 0 6px; font-size: 15px; }
+.about p, .about li { color: var(--muted); font-size: 14px; }
+.about ul { margin: 6px 0; padding-left: 20px; }
+.about li + li { margin-top: 4px; }
+.about-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+
+/* Phone ----------------------------------------------------------------- */
+@media (max-width: 860px) {
+  .app { display: flex; flex-direction: column; height: auto; min-height: 100dvh; }
+  .side { display: contents; }
+  .brand { order: 1; padding: 12px 16px; background: var(--surface); }
+  .start { order: 2; margin: 0 16px 12px; }
+  .mapwrap { order: 3; height: 300px; }
+  .summary { order: 4; padding: 12px 16px 0; }
+  .profile { order: 5; margin-top: 14px; }
+  .panel { order: 6; padding: 14px 16px 0; }
+  .credits { order: 7; padding: 14px 16px 18px; }
+  .btn { min-height: 44px; }
+  summary { min-height: 48px; }
+  /* Whole-pixel line heights above the map. A half pixel shows as a line between map tiles. */
+  .start, .start h2, .start li { line-height: 20px; }
+  .brand p:not(.purpose) { display: none; } /* Keeps the verdict on a small phone's first screen. */
+  .btn-why, .mode-btn { min-height: 44px; }
+  .start-actions .btn-primary { min-height: 52px; }
+  .explain-btn { width: 24px; height: 24px; font-size: 13px; }
+  .map-bottom { bottom: 24px; } /* Clear of the NASA credit line. */
+  /* The message goes under the mode switch, where it cannot run into Layers. */
+  .map-top { right: 10px; flex-direction: column; align-items: flex-start; }
+  .map-busy { top: 60px; }
+  .mapwrap:has(.map-top:not([data-drawing="true"]) .mode-note:not(:empty)) .map-busy:not([data-base-loading="true"]) { display: none; }
+  .map-top[data-drawing="true"] .mode-note { display: none; } /* The route needs the room. */
+  .profile-source { margin-left: 0; width: 100%; }
+  .map-layers-btn { min-height: 40px; }
+  /* While the walk plays, the map and profile stay together above the player. */
+  .is-walking .profile { order: 3; margin-top: 0; }
+  .is-walking .profile-head { display: none; }
+  .is-walking .profile-chart { height: 100px; }
+  .is-walking .app { padding-bottom: 240px; }
+  .is-walking .walk {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1050;
+    padding: 8px 16px;
+    background: var(--surface);
+    border-top: 1px solid var(--line);
+  }
+  .is-walking .walk-live { grid-template-columns: 1fr; gap: 0; }
+  .is-walking .walk-live > div { flex-direction: row; justify-content: space-between; gap: 8px; line-height: 18px; }
+  .is-walking .walk-live dt { font-size: 12.5px; }
+  .is-walking .walk-live dd { font-size: 13px; }
+  .is-walking .walk-status { min-height: 36px; }
+}
+
+/* Too narrow for the label beside the mode switch, so the button shows its icon only. */
+@media (max-width: 340px) {
+  .map-layers-btn span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .map-layers-btn { padding: 4px 8px; }
+}
+
+@media (max-width: 860px) and (max-height: 640px) {
+  .is-walking .mapwrap { height: 220px; }
+}
+
+/* A phone on its side has no room below the map, so the player goes beside it. */
+@media (max-width: 860px) and (max-height: 500px) {
+  .is-walking .mapwrap { width: 55%; height: 100dvh; }
+  .is-walking .profile { width: 55%; }
+  .is-walking .app { padding-bottom: 0; }
+  .is-walking .walk {
+    top: 0;
+    left: 55%;
+    align-content: start;
+    overflow-y: auto;
+    border-top: 0;
+    border-left: 1px solid var(--line);
+  }
+  .is-walking .walk-controls .btn { padding: 4px 8px; }
+  .is-walking .walk-speeds .mode-btn { min-width: 34px; padding: 4px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+}

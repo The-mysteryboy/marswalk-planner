@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Terrain check</title>
+<style>
+  body { font: 15px/1.5 system-ui, sans-serif; background: #111; color: #eee; margin: 24px; }
+  table { border-collapse: collapse; margin: 12px 0; }
+  td, th { padding: 4px 14px 4px 0; text-align: left; border-bottom: 1px solid #333; }
+  td.n { font-variant-numeric: tabular-nums; text-align: right; }
+</style>
+</head>
+<body>
+<h1>Phase 2 checkpoint: terrain sampling</h1>
+<p>Run from the project root with <code>python -m http.server</code>, then open <code>/tests/terrain_check.html</code>.</p>
+<div id="out">Loading elevation grid...</div>
+<script type="module">
+  import { loadGrids } from '../js/terrain.js';
+  import { haversineM } from '../js/route.js';
+
+  // Rover values come from NASA's M20_waypoints.json.
+  const POINTS = [
+    ['Crater center (IAU nomenclature)', 18.4082, 77.6873, null],
+    ['Landing site, sol 13', 18.44462715, 77.45088572, -2569.91],
+    ['Western rim, last waypoint, sol 2022', 18.43559434, 77.23322287, -1936.37],
+    ['Delta area', 18.48, 77.40, null],
+    ['Outside coverage', 25, 77.5, null],
+  ];
+  const out = document.getElementById('out');
+  try {
+    const t = await loadGrids((name) => new URL(`../data/${name}`, location.href).href).full;
+    const f = (v) => (v === null ? 'outside coverage' : `${v.toFixed(1)} m`);
+    const rows = POINTS.map(([name, lat, lon, rover]) => {
+      const e = t.elevationAt(lat, lon);
+      return `<tr><td>${name}</td><td class="n">${lat.toFixed(4)}, ${lon.toFixed(4)}</td><td class="n">${f(e)}</td><td class="n">${rover === null ? '-' : f(rover)}</td></tr>`;
+    }).join('');
+    const a = { lat: POINTS[1][1], lon: POINTS[1][2] };
+    const b = { lat: POINTS[2][1], lon: POINTS[2][2] };
+    out.innerHTML = `<table><tr><th>Point</th><th>Lat, lon</th><th>DEM</th><th>Rover</th></tr>${rows}</table>
+      <p id="slope">Mean slope, landing site to rim: <b>${t.slopeDeg(a, b).toFixed(2)} deg</b> over ${(haversineM(a, b) / 1000).toFixed(2)} km</p>
+      <p>Source: <a href="${t.source.url}" style="color:#9cf">${t.source.name}</a></p>`;
+  } catch (e) {
+    out.textContent = `Failed: ${e.message}`;
+  }
+</script>
+</body>
+</html>

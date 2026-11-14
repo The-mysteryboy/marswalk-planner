@@ -1,0 +1,17 @@
+{
+  "name": "marswalk-planner",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Plan a safe Marswalk at Jezero Crater from NASA mission data. Static site.",
+  "license": "Apache-2.0",
+  "x-ai-assistance": "Designed and directed by the author; code, tests and documentation developed with AI assistance (Claude, via Claude Code).",
+  "scripts": {
+    "test": "node --test",
+    "release": "node tools/release.mjs",
+    "check-layers": "node tools/check_layers.mjs --out tools/layer_check_results.json",
+    "verify": "node tools/verify_site.mjs https://the-mysteryboy.github.io/marswalk-planner/"
+  },
+  "devDependencies": {
+    "puppeteer-core": "^25.16.0"
+  }
+}
